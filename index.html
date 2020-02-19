@@ -145,157 +145,6 @@ svg
 </script>
 
 <script>
-//------------ Function tables ---------------
-function clear(){
-  var Table = document.getElementById('tables')
-  Table.innerHTML = ''
-}
-
-function tableselector(){
-dataload ="data1.csv"
-var dataselect=document.getElementById('selector').value;
-if (dataselect != "data1.csv"){
-  dataload=dataselect;
-}else{
-   dataload ="data1.csv";
-  }
-
-clear()
-d3.csv(dataload,data=> {
-d3.select("#tables")
-.append("thead")
-.append("tr")
-.selectAll("th")
-.data(Object.keys(data[0]))
-.enter()
-.append('th')
-.text(d=> d) 
-.attr('name',d=>d);
-
-d3.select("#tables")
-.append('tbody')
-.selectAll("tr")
-.data(data)
-.enter()
-.append('tr')
-.selectAll('td')
-.data(d=> Object.entries(d))
-.enter()
-.append('td')
-.text(d=>d[1])
-.attr('name',d=> d[0])
-})
-}
-
-</script>
-
-<script>
-//------------ Function plot 3 ---------------
-
-d3.csv("data3.csv", function(wide_data) {
-  var long_data = [];
-  wide_data.forEach( function(row) {
-    Object.keys(row).forEach( function(colname) {
-      if(colname == "name" || colname == "Value") {
-        return
-      }
-      long_data.push({"name": row["name"], "Value": row[colname], "Var": colname});
-    });
-  });
-  var dat=long_data;
-  mboxplot(dat)
-})
-
-function mboxplot(data) {
-  // set the dimensions and margins of the graph
-var margin = {top: 10, right: 30, bottom: 30, left: 40},
-    width = 460 - margin.left - margin.right,
-    height = 400 - margin.top - margin.bottom;
-
-// append the svg object to the body of the page
-var svg = d3.select("#my_dataviz3")
-  .append("svg")
-    .attr("width", width + margin.left + margin.right)
-    .attr("height", height + margin.top + margin.bottom)
-  .append("g")
-    .attr("transform",
-          "translate(" + margin.left + "," + margin.top + ")");
-          
-  // Compute quartiles, median, inter quantile range min and max 
-  var sumstat = d3.nest() // nest function allows to group the calculation per level of a factor
-    .key(function(d) { return d.Var;})
-    .rollup(function(d) {
-      q1 = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.25)
-      median = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.5)
-      q3 = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.75)
-      interQuantileRange = q3 - q1
-      min = q1 - 1.5 * interQuantileRange
-      max = q3 + 1.5 * interQuantileRange
-      return({q1: q1, median: median, q3: q3, interQuantileRange: interQuantileRange, min: min, max: max})
-    })
-    .entries(data)
-
-  // Show the X scale
-  var x = d3.scaleBand()
-    .range([ 0, width ])
-    .domain(["color", "length", "height"])
-    .paddingInner(1)
-    .paddingOuter(.5)
-  svg.append("g")
-    .attr("transform", "translate(0," + height + ")")
-    .call(d3.axisBottom(x))
-
-  // Show the Y scale
-  var y = d3.scaleLinear()
-    .domain([-25,35])
-    .range([height, 0])
-  svg.append("g").call(d3.axisLeft(y))
-
-  // Show the main vertical line
-  svg
-    .selectAll("vertLines")
-    .data(sumstat)
-    .enter()
-    .append("line")
-      .attr("x1", function(d){return(x(d.key))})
-      .attr("x2", function(d){return(x(d.key))})
-      .attr("y1", function(d){return(y(d.value.min))})
-      .attr("y2", function(d){return(y(d.value.max))})
-      .attr("stroke", "black")
-      .style("width", 20)
-
-  // rectangle for the main box
-  var boxWidth = 100
-  svg
-    .selectAll("boxes")
-    .data(sumstat)
-    .enter()
-    .append("rect")
-        .attr("x", function(d){return(x(d.key)-boxWidth/2)})
-        .attr("y", function(d){return(y(d.value.q3))})
-        .attr("height", function(d){return(y(d.value.q1)-y(d.value.q3))})
-        .attr("width", boxWidth )
-        .attr("stroke", "black")
-        .style("fill", "lightcyan")
-
-  // Show the median
-  svg
-    .selectAll("medianLines")
-    .data(sumstat)
-    .enter()
-    .append("line")
-      .attr("x1", function(d){return(x(d.key)-boxWidth/2) })
-      .attr("x2", function(d){return(x(d.key)+boxWidth/2) })
-      .attr("y1", function(d){return(y(d.value.median))})
-      .attr("y2", function(d){return(y(d.value.median))})
-      .attr("stroke", "black")
-      .style("width", 80)
-}
-
-</script>
-  
-
-<script>
 //------------ Function plot 2---------------
 // set the dimensions and margins of the graph
 var margin = {top: 30, right: 30, bottom: 70, left: 60},
@@ -357,6 +206,155 @@ function update(columnselect) {
   })
 }
 update('x')
+
+</script>
+
+<script>
+//------------ Function plot 3 ---------------
+
+d3.csv("data3.csv", function(wide_data) {
+  var long_data = [];
+  wide_data.forEach( function(row) {
+    Object.keys(row).forEach( function(colname) {
+      if(colname == "name" || colname == "Value") {
+        return
+      }
+      long_data.push({"name": row["name"], "Value": row[colname], "Var": colname});
+    });
+  });
+  var dat=long_data;
+  mboxplot(dat)
+})
+
+function mboxplot(data) {
+  // set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 40},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz3")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+          
+  // Compute quartiles, median, inter quantile range min and max 
+  var sumstat = d3.nest() // nest function allows to group the calculation per level of a factor
+    .key(function(d) { return d.Var;})
+    .rollup(function(d) {
+      q1 = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.25)
+      median = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.5)
+      q3 = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.75)
+      interQuantileRange = q3 - q1
+      min = q1 - 1.5 * interQuantileRange
+      max = q3 + 1.5 * interQuantileRange
+      return({q1: q1, median: median, q3: q3, interQuantileRange: interQuantileRange, min: min, max: max})
+    })
+    .entries(data)
+
+  // Show the X scale
+  var x = d3.scaleBand()
+    .range([ 0, width ])
+    .domain(["color", "length", "height"])
+    .paddingInner(1)
+    .paddingOuter(.5)
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+
+  // Show the Y scale
+  var y = d3.scaleLinear()
+    .domain([-25,55])
+    .range([height, 0])
+  svg.append("g").call(d3.axisLeft(y))
+
+  // Show the main vertical line
+  svg
+    .selectAll("vertLines")
+    .data(sumstat)
+    .enter()
+    .append("line")
+      .attr("x1", function(d){return(x(d.key))})
+      .attr("x2", function(d){return(x(d.key))})
+      .attr("y1", function(d){return(y(d.value.min))})
+      .attr("y2", function(d){return(y(d.value.max))})
+      .attr("stroke", "black")
+      .style("width", 20)
+
+  // rectangle for the main box
+  var boxWidth = 100
+  svg
+    .selectAll("boxes")
+    .data(sumstat)
+    .enter()
+    .append("rect")
+        .attr("x", function(d){return(x(d.key)-boxWidth/2)})
+        .attr("y", function(d){return(y(d.value.q3))})
+        .attr("height", function(d){return(y(d.value.q1)-y(d.value.q3))})
+        .attr("width", boxWidth )
+        .attr("stroke", "black")
+        .style("fill", "lightcyan")
+
+  // Show the median
+  svg
+    .selectAll("medianLines")
+    .data(sumstat)
+    .enter()
+    .append("line")
+      .attr("x1", function(d){return(x(d.key)-boxWidth/2) })
+      .attr("x2", function(d){return(x(d.key)+boxWidth/2) })
+      .attr("y1", function(d){return(y(d.value.median))})
+      .attr("y2", function(d){return(y(d.value.median))})
+      .attr("stroke", "black")
+      .style("width", 80)
+}
+
+</script>
+<script>
+//------------ Function tables ---------------
+function clear(){
+  var Table = document.getElementById('tables')
+  Table.innerHTML = ''
+}
+
+function tableselector(){
+dataload ="data1.csv"
+var dataselect=document.getElementById('selector').value;
+if (dataselect != "data1.csv"){
+  dataload=dataselect;
+}else{
+   dataload ="data1.csv";
+  }
+
+clear()
+d3.csv(dataload,data=> {
+d3.select("#tables")
+.append("thead")
+.append("tr")
+.selectAll("th")
+.data(Object.keys(data[0]))
+.enter()
+.append('th')
+.text(d=> d) 
+.attr('name',d=>d);
+
+d3.select("#tables")
+.append('tbody')
+.selectAll("tr")
+.data(data)
+.enter()
+.append('tr')
+.selectAll('td')
+.data(d=> Object.entries(d))
+.enter()
+.append('td')
+.text(d=>d[1])
+.attr('name',d=> d[0])
+})
+}
 
 </script>
 </body>
