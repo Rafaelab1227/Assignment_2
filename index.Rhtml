@@ -1,0 +1,152 @@
+<html>
+
+<head>
+<style type="text/css">
+.inline {
+  background-color: #f7f7f7;
+  border:solid 1px #B0B0B0;
+}
+.error {
+	font-weight: bold;
+	color: #FF0000;
+}
+.warning {
+	font-weight: bold;
+}
+.message {
+	font-style: italic;
+}
+.source, .output, .warning, .error, .message {
+	padding: 0 1em;
+  border:solid 1px #F7F7F7;
+}
+.source {
+  background-color: #f5f5f5;
+}
+.left {
+  text-align: left;
+}
+.right {
+  text-align: right;
+}
+.center {
+  text-align: center;
+}
+.hl.num {
+  color: #AF0F91;
+}
+.hl.str {
+  color: #317ECC;
+}
+.hl.com {
+  color: #AD95AF;
+  font-style: italic;
+}
+.hl.opt {
+  color: #000000;
+}
+.hl.std {
+  color: #585858;
+}
+.hl.kwa {
+  color: #295F94;
+  font-weight: bold;
+}
+.hl.kwb {
+  color: #B05A65;
+}
+.hl.kwc {
+  color: #55aa55;
+}
+.hl.kwd {
+  color: #BC5A65;
+  font-weight: bold;
+}
+</style>
+<title>Title</title>
+
+<script src="https://d3js.org/d3.v4.js"></script>
+<style>
+  th.selected{
+    color:red;
+  }
+  
+  td.selected{
+    background-color:lightgreen;
+  }
+</style>
+</head>
+
+<body>
+
+<table>
+<thead>
+<tr>
+  <th class="col1" onclick="myfunction(this)"> Col1 </th>
+  <th class="col2" onclick="myfunction(this)"> Col2 </th>
+</tr>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>2</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>4</td>
+</tr>
+</tbody>
+ </table> 
+
+<table id="d3table">
+</table>
+
+<script>
+// I could put a function plot that ontains the filename and, column="" who is going to change it
+
+function myfunction(e){
+console.log(e.className);
+}
+
+d3.csv("data3.csv",data=> {
+my_data=data[0];
+d3.select("#d3table")
+.append("thead")
+.append("tr")
+.selectAll("th")
+.data(Object.keys(data[0]))
+.enter()
+.append('th')
+.text(d=> d) //get the element and plot the element
+.attr('name',d=>d);
+
+d3.select("#d3table")
+.append('tbody')
+.selectAll("tr")
+.data(data)
+.enter()
+.append('tr')
+.selectAll('td')
+//.data(d=> Object.values(d))
+.data(d=> Object.entries(d))
+.enter()
+.append('td')
+.text(d=>d[1]) //d are the values
+.attr('name',d=> d[0])
+.on('click',d=>fun(d[0]));
+
+})
+
+//who is selected
+function fun(value){
+d3.selectAll(".selected")
+  .classed("selected",false);  
+d3.selectAll("[name='"+ value +"']")
+  .classed("selected",true);
+  //d3.selectAll("th")
+ // to check what I do .text("ok");
+ //.style("color", "red");
+ //console.log(value);
+}
+</script>
+</body>
+</html>

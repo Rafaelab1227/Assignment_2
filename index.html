@@ -1,0 +1,363 @@
+<html>
+
+<head>
+<script src="https://d3js.org/d3.v4.js"></script>
+<style>
+table {
+  width: 300px;
+  text-align: center;
+}
+
+td {
+ width: 5%;
+ border: 2px solid purple;
+ text-align: center;
+}
+
+th {
+ width: 5%;
+ border: 2px solid purple;
+ text-align: center;
+ background-color: lightpurple;
+ color: #BC5A65;
+ font-weight: bold;
+ 
+}
+</style>
+
+
+</head>
+
+<body>
+<h1>HTML for plotting datasets</h1> 
+
+<h2>Plot data 1</h2>
+<div id="my_dataviz"></div>
+
+<h2>Interactive plot data 2</h2>
+<div id="my_dataviz2"></div>
+<button onclick="update('x')">Column X</button>
+<button onclick="update('y')">Column Y</button>
+
+<h2>Plot data 3</h2>
+<div id="my_dataviz3"></div>
+
+<h2>Display dataset tables</h2>
+ <!--           Selector           -->
+ <select onchange="tableselector()" id='selector' onclick="clear()">
+  <option value="none" selected disabled hidden> 
+          Select a dataset 
+      </option>
+      <option value="data1.csv">Data 1</option>
+      <option value="data2.csv">Data 2</option>
+      <option value="data3.csv">Data 3</option>
+   </select>
+
+  <table id="tables"></table>
+
+<!--           Functions           -->
+<script>
+d3.csv("data1.csv", function(data){
+  var dat0 = data.map(d => + d.weight);
+  bplot(dat0);
+ 
+})
+//------------ Function plot ---------------
+function bplot(data) {
+// set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 40},
+  width = 400 - margin.left - margin.right,
+  height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz")
+.append("svg")
+  .attr("width", width + margin.left + margin.right)
+  .attr("height", height + margin.top + margin.bottom)
+.append("g")
+  .attr("transform",
+        "translate(" + margin.left + "," + margin.top + ")");
+
+// Compute summary statistics used for the box:
+var data_sorted = data.sort(d3.ascending)
+var q1 = d3.quantile(data_sorted, .25)
+var median = d3.quantile(data_sorted, .5)
+var q3 = d3.quantile(data_sorted, .75)
+var interQuantileRange = q3 - q1
+var min = q1 - 1.5 * interQuantileRange
+var max = q1 + 1.5 * interQuantileRange
+
+// Show the Y scale
+var y = d3.scaleLinear()
+  .domain([-10,35])
+  .range([height, 0]);
+svg.call(d3.axisLeft(y))
+
+// a few features for the box
+var center = 200
+var width = 100
+
+// Show the main vertical line
+svg
+.append("line")
+  .attr("x1", center)
+  .attr("x2", center)
+  .attr("y1", y(min) )
+  .attr("y2", y(max) )
+  .attr("stroke", "black")
+
+// Show the box
+svg
+.append("rect")
+  .attr("x", center - width/2)
+  .attr("y", y(q3) )
+  .attr("height", (y(q1)-y(q3)) )
+  .attr("width", width )
+  .attr("stroke", "black")
+  .style("fill", "#BC5A65")
+
+// show median, min and max horizontal lines
+svg
+.selectAll("toto")
+.data([min, median, max])
+.enter()
+.append("line")
+  .attr("x1", center-width/2)
+  .attr("x2", center+width/2)
+  .attr("y1", function(d){ return(y(d))} )
+  .attr("y2", function(d){ return(y(d))} )
+  .attr("stroke", "black")
+
+// horizontal jitter for each point
+
+  var jitterWidth = 50
+svg
+  .selectAll("indPoints")
+  .data(data)
+  .enter()
+  .append("circle")
+    .attr("cx", d=>(175 + Math.random()*jitterWidth))
+    .attr("cy", function(d){return(y(d))})
+    .attr("r", 4)
+    .style("fill", "white")
+    .attr("stroke", "black")
+}
+</script>
+
+<script>
+//------------ Function tables ---------------
+function clear(){
+  var Table = document.getElementById('tables')
+  Table.innerHTML = ''
+}
+
+function tableselector(){
+dataload ="data1.csv"
+var dataselect=document.getElementById('selector').value;
+if (dataselect != "data1.csv"){
+  dataload=dataselect;
+}else{
+   dataload ="data1.csv";
+  }
+
+clear()
+d3.csv(dataload,data=> {
+d3.select("#tables")
+.append("thead")
+.append("tr")
+.selectAll("th")
+.data(Object.keys(data[0]))
+.enter()
+.append('th')
+.text(d=> d) 
+.attr('name',d=>d);
+
+d3.select("#tables")
+.append('tbody')
+.selectAll("tr")
+.data(data)
+.enter()
+.append('tr')
+.selectAll('td')
+.data(d=> Object.entries(d))
+.enter()
+.append('td')
+.text(d=>d[1])
+.attr('name',d=> d[0])
+})
+}
+
+</script>
+
+<script>
+//------------ Function plot 3 ---------------
+
+d3.csv("data3.csv", function(wide_data) {
+  var long_data = [];
+  wide_data.forEach( function(row) {
+    Object.keys(row).forEach( function(colname) {
+      if(colname == "name" || colname == "Value") {
+        return
+      }
+      long_data.push({"name": row["name"], "Value": row[colname], "Var": colname});
+    });
+  });
+  var dat=long_data;
+  mboxplot(dat)
+})
+
+function mboxplot(data) {
+  // set the dimensions and margins of the graph
+var margin = {top: 10, right: 30, bottom: 30, left: 40},
+    width = 460 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz3")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+          
+  // Compute quartiles, median, inter quantile range min and max 
+  var sumstat = d3.nest() // nest function allows to group the calculation per level of a factor
+    .key(function(d) { return d.Var;})
+    .rollup(function(d) {
+      q1 = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.25)
+      median = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.5)
+      q3 = d3.quantile(d.map(function(g) { return +g.Value;}).sort(d3.ascending),.75)
+      interQuantileRange = q3 - q1
+      min = q1 - 1.5 * interQuantileRange
+      max = q3 + 1.5 * interQuantileRange
+      return({q1: q1, median: median, q3: q3, interQuantileRange: interQuantileRange, min: min, max: max})
+    })
+    .entries(data)
+
+  // Show the X scale
+  var x = d3.scaleBand()
+    .range([ 0, width ])
+    .domain(["color", "length", "height"])
+    .paddingInner(1)
+    .paddingOuter(.5)
+  svg.append("g")
+    .attr("transform", "translate(0," + height + ")")
+    .call(d3.axisBottom(x))
+
+  // Show the Y scale
+  var y = d3.scaleLinear()
+    .domain([-25,35])
+    .range([height, 0])
+  svg.append("g").call(d3.axisLeft(y))
+
+  // Show the main vertical line
+  svg
+    .selectAll("vertLines")
+    .data(sumstat)
+    .enter()
+    .append("line")
+      .attr("x1", function(d){return(x(d.key))})
+      .attr("x2", function(d){return(x(d.key))})
+      .attr("y1", function(d){return(y(d.value.min))})
+      .attr("y2", function(d){return(y(d.value.max))})
+      .attr("stroke", "black")
+      .style("width", 20)
+
+  // rectangle for the main box
+  var boxWidth = 100
+  svg
+    .selectAll("boxes")
+    .data(sumstat)
+    .enter()
+    .append("rect")
+        .attr("x", function(d){return(x(d.key)-boxWidth/2)})
+        .attr("y", function(d){return(y(d.value.q3))})
+        .attr("height", function(d){return(y(d.value.q1)-y(d.value.q3))})
+        .attr("width", boxWidth )
+        .attr("stroke", "black")
+        .style("fill", "lightcyan")
+
+  // Show the median
+  svg
+    .selectAll("medianLines")
+    .data(sumstat)
+    .enter()
+    .append("line")
+      .attr("x1", function(d){return(x(d.key)-boxWidth/2) })
+      .attr("x2", function(d){return(x(d.key)+boxWidth/2) })
+      .attr("y1", function(d){return(y(d.value.median))})
+      .attr("y2", function(d){return(y(d.value.median))})
+      .attr("stroke", "black")
+      .style("width", 80)
+}
+
+</script>
+  
+
+<script>
+//------------ Function plot 2---------------
+// set the dimensions and margins of the graph
+var margin = {top: 30, right: 30, bottom: 70, left: 60},
+    width = 1000 - margin.left - margin.right,
+    height = 400 - margin.top - margin.bottom;
+
+// append the svg object to the body of the page
+var svg = d3.select("#my_dataviz2")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")");
+
+// Initialize the X axis
+var x = d3.scaleBand()
+  .range([ 0, width ])
+  .padding(0.2);
+var xAxis = svg.append("g")
+  .attr("transform", "translate(0," + height + ")")
+
+// Initialize the Y axis
+var y = d3.scaleLinear()
+  .range([ height, 0]);
+var yAxis = svg.append("g")
+  .attr("class", "myYaxis")
+
+function update(columnselect) {
+
+  // Parse the Data
+  d3.csv("data2.csv", function(data) {
+
+    // X axis
+    x.domain(data.map(function(d) { return d.name; }))
+    xAxis.transition().duration(1000).call(d3.axisBottom(x))
+
+    // Add Y axis
+    //y.domain([0, d3.max(data, function(d) { return +d["name='"+ columnselect +"'"] }) ]);
+    y.domain([0, d3.max(data, function(d) { return +d[columnselect] }) ]);
+    yAxis.transition().duration(1000).call(d3.axisLeft(y));
+
+    // variable u: map data to existing bars
+    var u = svg.selectAll("rect")
+      .data(data)
+
+    // update bars
+    u
+      .enter()
+      .append("rect")
+      .merge(u)
+      .transition()
+      .duration(1000)
+        .attr("x", function(d) { return x(d.name); })
+        .attr("y", function(d) { return y(d[columnselect]); })
+        .attr("width", x.bandwidth())
+        .attr("height", function(d) { return height - y(d[columnselect]); })
+        .attr("fill", "orange")
+  })
+}
+update('x')
+
+</script>
+</body>
+</html>
